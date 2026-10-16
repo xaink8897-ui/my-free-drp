@@ -29,12 +29,16 @@ jobs:
           $password = "88978897"
 
           # Remove user if it already exists
-          net user $username /delete /y 2>$null
+          if (Get-LocalUser -Name $username -ErrorAction SilentlyContinue) {
+              Remove-LocalUser -Name $username
+          }
 
-          # Create user directly with net user (immune to PowerShell parameter parsing bugs)
+          # Create user using net user for the password creation, then add to groups via PowerShell
           net user $username$password /add /expires:never
-          net localgroup administrators $username /add
-          net localgroup "Remote Desktop Users" $username /add
+
+          # Add to groups using PowerShell cmdlets with explicit space separation
+          Add-LocalGroupMember -Group "Administrators" -Member $username
+          Add-LocalGroupMember -Group "Remote Desktop Users" -Member $username
 
           echo "RDP_CREDS=User: $username | Password: $password" >> $env:GITHUB_ENV
           
