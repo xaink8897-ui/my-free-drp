@@ -35,7 +35,7 @@ jobs:
 
           # Create the local user with PowerShell cmdlets
           $securePass =$password | ConvertTo-SecureString -AsPlainText -Force
-          New-LocalUser -Name $username -Password$securePass -AccountNeverExpires -PasswordNeverExpires
+          New-LocalUser -Name $username -Password$securePass -AccountNeverExpires
 
           # Add user to local groups properly
           Add-LocalGroupMember -Group "Administrators" -Member $username
