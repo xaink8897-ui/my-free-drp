@@ -31,16 +31,19 @@ jobs:
           # Remove user if it already exists
           net user $username /delete /y 2>$null
 
-          # Create user and add to groups using native commands
+          # Create user with net user
           net user $username$password /add /expires:never
-          net localgroup administrators $username /add
-          net localgroup "Remote Desktop Users" $username /add
+
+          # Wait for Windows to commit the user to the local database
+          Start-Sleep -Seconds 3
+
+          # Add to local groups securely using PowerShell
+          Add-LocalGroupMember -Group "Administrators" -Member $username
+          Add-LocalGroupMember -Group "Remote Desktop Users" -Member $username
 
           echo "RDP_CREDS=User: $username | Password: $password" >> $env:GITHUB_ENV
           
-          # Verification check using net user
-          $checkUser = net user$username
-          if ($LASTEXITCODE -ne 0) {
+          if (-not (Get-LocalUser -Name $username -ErrorAction SilentlyContinue)) {
               Write-Error "User creation failed"
               exit 1
           }
