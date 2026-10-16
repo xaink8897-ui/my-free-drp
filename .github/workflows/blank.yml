@@ -25,18 +25,17 @@ jobs:
 
       - name: Create RDP User with Custom Password
         run: |
-          $username = "RDP"
-          $password = "88978897"
+          # Clean up existing user if present
+          net user RDP /delete 2>$null
 
-          # Remove user if it already exists
-          cmd /c "net user $username /delete" 2>$null
+          # Create user with password 88978897 and non-expiring settings
+          net user RDP 88978897 /add /expires:never
 
-          # Create user and add to groups via cmd to completely avoid PowerShell parsing bugs
-          cmd /c "net user $username$password /add /expires:never"
-          cmd /c "net localgroup administrators $username /add"
-          cmd /c "net localgroup \"Remote Desktop Users\" $username /add"
+          # Add user to Administrators and Remote Desktop Users groups
+          net localgroup administrators RDP /add
+          net localgroup "Remote Desktop Users" RDP /add
 
-          echo "RDP_CREDS=User: $username | Password: $password" >> $env:GITHUB_ENV
+          echo "RDP_CREDS=User: RDP | Password: 88978897" >> $env:GITHUB_ENV
 
       - name: Install Tailscale
         run: |
