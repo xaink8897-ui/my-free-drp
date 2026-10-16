@@ -29,18 +29,18 @@ jobs:
           $password = "88978897"
 
           # Remove user if it already exists
-          net user $username /delete /y 2>$null
+          if (Get-LocalUser -Name $username -ErrorAction SilentlyContinue) {
+              Remove-LocalUser -Name $username
+          }
 
-          # Create user with net user
-          net user $username$password /add /expires:never
-
-          # Add to local groups scoping with the local computer name
-          net localgroup administrators "$env:COMPUTERNAME\$username" /add
-          net localgroup "Remote Desktop Users" "$env:COMPUTERNAME\$username" /add
+          # Create user and pipe directly into local groups
+          $securePass = ConvertTo-SecureString$password -AsPlainText -Force
+          $createdUser = New-LocalUser -Name$username -Password $securePass -AccountNeverExpires$createdUser | Add-LocalGroupMember -Group "Administrators"
+          $createdUser | Add-LocalGroupMember -Group "Remote Desktop Users"
 
           echo "RDP_CREDS=User: $username | Password: $password" >> $env:GITHUB_ENV
           
-          if (-not (Get-LocalUser -Name $username -ErrorAction SilentlyContinue)) {
+          if (-not (Get-LocalUser -Name $username)) {
               Write-Error "User creation failed"
               exit 1
           }
