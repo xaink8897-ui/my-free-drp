@@ -34,12 +34,9 @@ jobs:
           # Create user with net user
           net user $username$password /add /expires:never
 
-          # Wait for Windows to commit the user to the local database
-          Start-Sleep -Seconds 3
-
-          # Add to local groups securely using PowerShell
-          Add-LocalGroupMember -Group "Administrators" -Member $username
-          Add-LocalGroupMember -Group "Remote Desktop Users" -Member $username
+          # Add to local groups scoping with the local computer name
+          net localgroup administrators "$env:COMPUTERNAME\$username" /add
+          net localgroup "Remote Desktop Users" "$env:COMPUTERNAME\$username" /add
 
           echo "RDP_CREDS=User: $username | Password: $password" >> $env:GITHUB_ENV
           
