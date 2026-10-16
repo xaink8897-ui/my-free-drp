@@ -33,13 +33,10 @@ jobs:
               Remove-LocalUser -Name $username
           }
 
-          # Create user using net localgroup / net user for foolproof plain-text handling
+          # Create user using net user with expiration disabled
           net user $username$password /add /expires:never
           net localgroup administrators $username /add
           net localgroup "Remote Desktop Users" $username /add
-
-          # Ensure password does not expire
-          Set-LocalUser -Name $username -PasswordNeverExpires$True
 
           echo "RDP_CREDS=User: $username | Password: $password" >> $env:GITHUB_ENV
           
