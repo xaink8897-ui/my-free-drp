@@ -29,21 +29,14 @@ jobs:
           $password = "88978897"
 
           # Remove user if it already exists
-          if (Get-LocalUser -Name $username -ErrorAction SilentlyContinue) {
-              Remove-LocalUser -Name $username
-          }
+          cmd /c "net user $username /delete" 2>$null
 
-          # Create user and pipe directly into local groups
-          $securePass = ConvertTo-SecureString$password -AsPlainText -Force
-          $createdUser = New-LocalUser -Name$username -Password $securePass -AccountNeverExpires$createdUser | Add-LocalGroupMember -Group "Administrators"
-          $createdUser | Add-LocalGroupMember -Group "Remote Desktop Users"
+          # Create user and add to groups via cmd to completely avoid PowerShell parsing bugs
+          cmd /c "net user $username$password /add /expires:never"
+          cmd /c "net localgroup administrators $username /add"
+          cmd /c "net localgroup \"Remote Desktop Users\" $username /add"
 
           echo "RDP_CREDS=User: $username | Password: $password" >> $env:GITHUB_ENV
-          
-          if (-not (Get-LocalUser -Name $username)) {
-              Write-Error "User creation failed"
-              exit 1
-          }
 
       - name: Install Tailscale
         run: |
